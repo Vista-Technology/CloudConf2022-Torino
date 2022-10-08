@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: delete-pod-sa
+  namespace: argo
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: delete-pod-sa-cluster-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete", "patch", "watch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: delete-pod-sa-cluster-role-binding
+roleRef:
+  kind: ClusterRole
+  name: delete-pod-sa-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: delete-pod-sa
+    namespace: argo
+
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: delete-pod-template
+  namespace: argo
+spec:
+  entrypoint: delete-pod
+  serviceAccountName: delete-pod-sa
+  arguments:
+    parameters:
+      - name: falco-event
+        value: "{}"
+  templates:
+    - name: delete-pod
+      inputs:
+        parameters:
+          - name: falco-event
+      container:
+        image: devopps/kubernetes-response-engine-based-on-event-driven-workflow@sha256:22ee203a33fe88f0f99968daebdcea0ca52c8a3d6f7af4c823ed78ac15b7c5db
+        env:
+          - name: BODY
+            value: "{{inputs.parameters.falco-event}}"

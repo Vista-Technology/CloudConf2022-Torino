@@ -1,0 +1,36 @@
+
+falcosidekick:
+    enabled: true
+    webui:
+        enabled: true
+    config:
+      customfields: "Source:falco"
+      webhook:
+          address: http://webhook-falco-eventsource-svc.argo-events.svc.cluster.local:12000/falco
+          customHeaders: Source:falco
+      loki:
+        hostport: http://loki-demo.monitoring-demo:3100
+        extralabels: "Source:falco"
+fakeEventGenerator:
+  enabled: false
+ebpf:
+  enabled: true
+auditLog:
+  enabled: true
+falco:
+  rulesFile:
+    - /etc/falco/falco_rules.yaml
+    - /etc/falco/falco_rules.local.yaml
+    - /etc/falco/k8s_audit_rules.yaml
+    - /etc/falco/rules.d/custom-rules.yaml
+customRules:
+  custom-rules.yaml: |-
+    - list: website_ips
+      items: ['"213.215.222.58"', '"213.215.222.59"']
+    
+    - rule: Connection to vistatech.it
+      desc: Detect attempts to connect to Vista Technology website  
+      condition: outbound and fd.sip in (website_ips)
+      output: Outbound connection to Vista Technology website https://www.vistatech.it (command=%proc.cmdline connection=%fd.name container_id=%container.id container_name=%container.name %container.info image=%container.image)
+      priority: EMERGENCY
+      tags: [network]

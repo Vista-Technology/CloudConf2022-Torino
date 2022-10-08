@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: cloudconf2022demo
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
